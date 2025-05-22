@@ -20,7 +20,10 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+keyboard_config.json
+backups/
 htmlcov/
+test.py
 .tox/
 .nox/
 .coverage

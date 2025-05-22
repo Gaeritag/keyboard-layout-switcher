@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Switcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#1a1a1a',
+                            card: '#2d2d2d',
+                            border: '#404040',
+                            text: '#e5e5e5',
+                            muted: '#a3a3a3'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark-bg transition-colors duration-200">
+    <div id="app" class="min-h-screen">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <!-- Header -->
+            <div class="bg-white dark:bg-dark-card rounded-lg shadow-sm p-6 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-dark-text">Keyboard Switcher</h1>
+                        <p class="text-gray-600 dark:text-dark-muted">Manage your keyboard layouts with ease</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button @click="toggleDarkMode" class="text-gray-600 dark:text-dark-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors">
+                            <svg v-if="isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            </svg>
+                        </button>
+                        <a href="https://github.com/Gaeritag" target="_blank" class="text-gray-600 dark:text-dark-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="bg-white dark:bg-dark-card rounded-lg shadow-sm p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text">Current Status</h2>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                        <p class="text-sm text-gray-500 dark:text-dark-muted">Active Keyboard</p>
+                        <p class="text-lg font-medium text-gray-900 dark:text-dark-text truncate" :title="status.active_keyboard || 'None'">${status.active_keyboard || 'None'}</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-dark-bg rounded-lg p-4">
+                        <p class="text-sm text-gray-500 dark:text-dark-muted">Current Layout</p>
+                        <p class="text-lg font-medium text-gray-900 dark:text-dark-text">${status.current_layout || 'None'}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detected Keyboards -->
+            <div class="bg-white dark:bg-dark-card rounded-lg shadow-sm p-6 mb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-dark-text">Detected Keyboards</h2>
+                </div>
+
+                <div v-if="config.length === 0" class="text-center py-8">
+                    <p class="text-gray-500 dark:text-dark-muted">No keyboards detected.</p>
+                </div>
+
+                <div v-else class="space-y-4">
+                    <div v-for="keyboard in config" :key="keyboard.name"
+                         :class="['border-2 rounded-lg p-4 transition-colors cursor-move', 
+                                keyboard.enabled ? 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg' : 'border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-card',
+                                keyboard.active ? '!border-blue-500 dark:!border-blue-500 bg-blue-50 dark:bg-blue-900/20' : '']"
+                         draggable="true"
+                         @dragstart="dragStart($event, keyboard.name)"
+                         @dragend="dragEnd"
+                         @dragover.prevent
+                         @drop="drop($event, keyboard.name)">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <div class="flex items-center">
+                                    <h3 class="text-lg font-medium" :class="keyboard.enabled ? 'text-gray-900 dark:text-dark-text' : 'text-gray-500 dark:text-dark-muted'">${keyboard.name}</h3>
+                                    <span v-if="keyboard.active" class="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">Active</span>
+                                    <span v-if="keyboard.connected" class="ml-2 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">Connected</span>
+                                    <span v-else class="ml-2 px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full">Disconnected</span>
+                                </div>                            
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" v-model="keyboard.enabled" @change="toggleKeyboard(keyboard.name)" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <span class="ml-3 text-sm font-medium" :class="keyboard.enabled ? 'text-gray-900 dark:text-dark-text' : 'text-gray-500 dark:text-dark-muted'">Enabled</span>
+                                </label>
+                                <button v-if="!keyboard.connected" 
+                                        @click="removeKeyboard(keyboard.name)"
+                                        class="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1" :class="keyboard.enabled ? 'text-gray-700 dark:text-dark-text' : 'text-gray-500 dark:text-dark-muted'">Layout</label>
+                                <input type="text" v-model="keyboard.layout" 
+                                       @change="saveConfig"
+                                       :class="['w-full px-3 py-2 border rounded-lg', 
+                                               keyboard.enabled ? 'border-gray-300 dark:border-dark-border focus:border-gray-400 dark:focus:border-gray-500 dark:bg-dark-bg dark:text-dark-text' : 'border-gray-200 dark:border-dark-border bg-gray-100 dark:bg-dark-bg dark:text-dark-muted']">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1" :class="keyboard.enabled ? 'text-gray-700 dark:text-dark-text' : 'text-gray-500 dark:text-dark-muted'">VID/PID</label>
+                                <div class="text-sm" :class="keyboard.enabled ? 'text-gray-600 dark:text-dark-text' : 'text-gray-400 dark:text-dark-muted'">
+                                    <div v-for="vid_pid in keyboard.vid_pid" :key="vid_pid">${vid_pid}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue
+
+        createApp({
+            delimiters: ['${', '}'],
+            data() {
+                return {
+                    config: [],
+                    status: {
+                        active_keyboard: null,
+                        current_layout: null
+                    },
+                    draggedKeyboard: null,
+                    isDarkMode: localStorage.getItem('darkMode') === 'true'
+                }
+            },
+            mounted() {
+                // Apply dark mode on mount
+                if (this.isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                }
+                this.loadConfig();
+                this.loadStatus();
+                setInterval(() => {
+                    this.loadStatus();
+                    this.detectKeyboards();
+                }, 2000);
+            },
+            methods: {
+                toggleDarkMode() {
+                    this.isDarkMode = !this.isDarkMode;
+                    if (this.isDarkMode) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                    localStorage.setItem('darkMode', this.isDarkMode);
+                },
+                async dragStart(event, name) {
+                    this.draggedKeyboard = name;
+                    event.target.classList.add('opacity-50');
+                },
+                async dragEnd(event) {
+                    event.target.classList.remove('opacity-50');
+                    this.draggedKeyboard = null;
+                },
+                async drop(event, targetName) {
+                    if (!this.draggedKeyboard || this.draggedKeyboard === targetName) return;
+
+                    try {
+                        // Find the indices of the dragged and target keyboards
+                        const draggedIndex = this.config.findIndex(kb => kb.name === this.draggedKeyboard);
+                        const targetIndex = this.config.findIndex(kb => kb.name === targetName);
+                        
+                        if (draggedIndex === -1 || targetIndex === -1) return;
+                        
+                        // Remove the dragged keyboard and insert it at the target position
+                        const [draggedKeyboard] = this.config.splice(draggedIndex, 1);
+                        this.config.splice(targetIndex, 0, draggedKeyboard);
+                        
+                        // Update active status based on enabled and connected state
+                        let foundActive = false;
+                        for (const keyboard of this.config) {
+                            keyboard.active = keyboard.enabled && keyboard.connected && !foundActive;
+                            if (keyboard.active) foundActive = true;
+                        }
+                        
+                        await this.saveConfig();
+                    } catch (error) {
+                        console.error('Error during drag and drop:', error);
+                        await this.loadConfig();
+                    }
+                },
+                async loadConfig() {
+                    try {
+                        const response = await fetch('/api/config');
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        this.config = await response.json();
+                    } catch (error) {
+                        console.error('Error loading config:', error);
+                    }
+                },
+                async loadStatus() {
+                    try {
+                        const response = await fetch('/api/status');
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        res = await response.json()
+                        if (this.status == res) return;
+                        this.status = res;
+
+                        let foundActive = false;
+                        for (const kb of this.config) {
+                            if (kb.enabled && kb.connected) {
+                                if (!foundActive) {
+                                    kb.active = true;
+                                    foundActive = true;
+                                } else {
+                                    kb.active = false;
+                                }
+                            } else {
+                                kb.active = false;
+                            }
+                        }                
+                        await this.saveConfig();
+
+                    } catch (error) {
+                        console.error('Error loading status:', error);
+                    }
+                },
+                async saveConfig() {
+                    try {
+                        const response = await fetch('/api/config', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(this.config)
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error saving config:', error);
+                        // Reload config to ensure UI is in sync
+                        await this.loadConfig();
+                    }
+                },
+                async detectKeyboards() {
+                    try {
+                        const response = await fetch('/api/detected_keyboards');
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const detected = await response.json();
+                        
+                        // Create a new array to store updated config
+                        const newConfig = [...this.config];
+                        
+                        // Update connection status for existing keyboards
+                        detected.forEach(keyboard => {
+                            const name = `${keyboard.vendor} ${keyboard.product}`;
+                            const existingKeyboard = newConfig.find(kb => kb.name === name);
+                            
+                            if (existingKeyboard) {
+                                // Update existing keyboard
+                                existingKeyboard.connected = keyboard.connected;
+                            } else {
+                                // Add new keyboard
+                                newConfig.push({
+                                    active: false,
+                                    connected: keyboard.connected,
+                                    enabled: false,
+                                    layout: "00000409",
+                                    name: name,
+                                    product: keyboard.product,
+                                    vendor: keyboard.vendor,
+                                    vid_pid: keyboard.vid_pid
+                                });
+                            }
+                        });
+
+                        this.config = newConfig;
+                    } catch (error) {
+                        console.error('Error detecting keyboards:', error);
+                    }
+                },
+                async toggleKeyboard(name) {
+                    try {
+                        const keyboard = this.config.find(kb => kb.name === name);
+                        if (!keyboard) return;
+
+                        if (!keyboard.enabled) {
+                            keyboard.active = false;
+                        }
+
+                        let foundActive = false;
+                        for (const kb of this.config) {
+                            if (kb.enabled && kb.connected) {
+                                if (!foundActive) {
+                                    kb.active = true;
+                                    foundActive = true;
+                                } else {
+                                    kb.active = false;
+                                }
+                            } else {
+                                kb.active = false;
+                            }
+                        }
+                        
+                        await this.saveConfig();
+                        await this.loadStatus();
+                    } catch (error) {
+                        console.error('Error toggling keyboard:', error);
+                        await this.loadConfig();
+                    }
+                },
+                async removeKeyboard(name) {
+                    try {
+                        const index = this.config.findIndex(kb => kb.name === name);
+                        if (index !== -1) {
+                            this.config.splice(index, 1);
+                            await this.saveConfig();
+                        }
+                    } catch (error) {
+                        console.error('Error removing keyboard:', error);
+                        await this.loadConfig();
+                    }
+                }
+            },
+            computed: {
+                orderedNames() {
+                    return Object.keys(this.config);
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html> 
