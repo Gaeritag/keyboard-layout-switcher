@@ -5,7 +5,7 @@ A Windows utility to automatically switch the input language based on the connec
 ## Features
 - Detects connected keyboards and their HWIDs
 - Automatically switches Windows input language when a specific keyboard is connected
-- Simple GUI to manage keyboard HWIDs
+- Simple GUI to manage config
 
 ## Requirements
 - Python 3.8+
