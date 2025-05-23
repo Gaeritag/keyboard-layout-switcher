@@ -34,6 +34,15 @@ This tool is designed for Windows users who frequently switch between multiple k
 ---
 
 ## Features
+- Detects connected keyboards and their HWIDs
+- Automatically switches Windows input language when a specific keyboard is connected
+- Simple GUI to manage keyboard layout config
+
+## Requirements
+- Python 3.8+
+- [pywinusb](https://pypi.org/project/pywinusb/)
+- [wmi](https://pypi.org/project/WMI/)
+- [tkinter](https://docs.python.org/3/library/tkinter.html) (standard library)
 
 - Automatically detects connected keyboards.
 - Assigns and switches Windows input language/layout based on the active keyboard.
@@ -183,5 +192,7 @@ Example configuration entry:
 ---
 
 ## License
+MIT License 
+
 
 This project is licensed under the MIT License.
