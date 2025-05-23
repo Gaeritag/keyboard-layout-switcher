@@ -10,6 +10,7 @@ import shutil
 from datetime import datetime
 from flask import Flask, render_template, jsonify, request
 import threading
+import signal
 import webbrowser
 from flask_cors import CORS
 import pythoncom
@@ -24,11 +25,6 @@ WM_INPUTLANGCHANGEREQUEST = 0x0050
 
 CONFIG_FILE = "keyboard_config.json"
 
-from flask import request, jsonify
-from functools import wraps
-from time import time
-from collections import deque, defaultdict
-
 # Constants for rate limiting and size restrictions
 MAX_CONFIG_SIZE = 1024 * 1024  # 1MB max config size
 MAX_KEYBOARDS = 50            # Maximum number of keyboards in config
@@ -37,6 +33,7 @@ MAX_VID_PID_PER_KEYBOARD = 10 # Maximum VID/PID entries per keyboard
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+shutdown_event = threading.Event()
 
 def load_config():
     """Load keyboard configuration from file or return empty dict if not exists."""
@@ -273,8 +270,10 @@ def force_input_language(layout_hex):
 def create_tray_icon():
     """Creates a system tray icon with menu."""
     def on_configure():
+        flask_thread = threading.Thread(target=run_flask, daemon=True)
+        flask_thread.start()
         webbrowser.open('http://localhost:5000')
-    
+
     def on_exit():
         icon.stop()
         os._exit(0)
@@ -371,6 +370,12 @@ def get_detected_keyboards():
     
     return jsonify(result)
 
+@app.route('/exit', methods=['POST'])
+def close_backend():
+    print("[INFO] Beacon received: shutting down...")
+    shutdown_event.set()  # Signal the shutdown
+    return '', 204
+
 def run_flask():
     """Run the Flask application."""
     app.run(host='localhost', port=5000)
@@ -379,10 +384,6 @@ def main():
     """Main loop: detects active keyboard and switches input language if needed."""
     print("[INFO] Keyboard language switcher started.")
     last_keyboard = None
-    
-    # Start Flask in a separate thread
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
     
     # Create and start the system tray icon
     icon = create_tray_icon()

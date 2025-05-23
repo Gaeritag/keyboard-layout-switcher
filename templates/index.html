@@ -363,6 +363,14 @@
                 }
             }
         }).mount('#app')
+        window.addEventListener('unload', function () {
+            fetch('/api/exit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+        });
     </script>
 </body>
 </html> 
