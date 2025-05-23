@@ -15,8 +15,6 @@ import webbrowser
 from flask_cors import CORS
 import pythoncom
 import pywinusb.hid as hid
-from collections import deque
-from functools import wraps
 
 # Windows consts
 KLF_ACTIVATE = 0x00000001
@@ -33,7 +31,6 @@ MAX_VID_PID_PER_KEYBOARD = 10 # Maximum VID/PID entries per keyboard
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
-shutdown_event = threading.Event()
 
 def load_config():
     """Load keyboard configuration from file or return empty dict if not exists."""
@@ -270,8 +267,6 @@ def force_input_language(layout_hex):
 def create_tray_icon():
     """Creates a system tray icon with menu."""
     def on_configure():
-        flask_thread = threading.Thread(target=run_flask, daemon=True)
-        flask_thread.start()
         webbrowser.open('http://localhost:5000')
 
     def on_exit():
@@ -370,12 +365,6 @@ def get_detected_keyboards():
     
     return jsonify(result)
 
-@app.route('/exit', methods=['POST'])
-def close_backend():
-    print("[INFO] Beacon received: shutting down...")
-    shutdown_event.set()  # Signal the shutdown
-    return '', 204
-
 def run_flask():
     """Run the Flask application."""
     app.run(host='localhost', port=5000)
@@ -385,6 +374,9 @@ def main():
     print("[INFO] Keyboard language switcher started.")
     last_keyboard = None
     
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+
     # Create and start the system tray icon
     icon = create_tray_icon()
     icon.run_detached()

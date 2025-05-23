@@ -42,7 +42,6 @@ This tool is designed for Windows users who frequently switch between multiple k
 - Python 3.8+
 - [pywinusb](https://pypi.org/project/pywinusb/)
 - [wmi](https://pypi.org/project/WMI/)
-- [tkinter](https://docs.python.org/3/library/tkinter.html) (standard library)
 
 - Automatically detects connected keyboards.
 - Assigns and switches Windows input language/layout based on the active keyboard.

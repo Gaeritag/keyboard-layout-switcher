@@ -88,22 +88,29 @@
 
                 <div v-else class="space-y-4">
                     <div v-for="keyboard in config" :key="keyboard.name"
-                         :class="['border-2 rounded-lg p-4 transition-colors cursor-move', 
+                         :class="['border-2 rounded-lg p-4 transition-colors', 
                                 keyboard.enabled ? 'border-gray-200 dark:border-dark-border bg-white dark:bg-dark-bg' : 'border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-card',
                                 keyboard.active ? '!border-blue-500 dark:!border-blue-500 bg-blue-50 dark:bg-blue-900/20' : '']"
-                         draggable="true"
-                         @dragstart="dragStart($event, keyboard.name)"
-                         @dragend="dragEnd"
                          @dragover.prevent
                          @drop="drop($event, keyboard.name)">
                         <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <div class="flex items-center">
-                                    <h3 class="text-lg font-medium" :class="keyboard.enabled ? 'text-gray-900 dark:text-dark-text' : 'text-gray-500 dark:text-dark-muted'">${keyboard.name}</h3>
-                                    <span v-if="keyboard.active" class="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">Active</span>
-                                    <span v-if="keyboard.connected" class="ml-2 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">Connected</span>
-                                    <span v-else class="ml-2 px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full">Disconnected</span>
-                                </div>                            
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg mr-3 cursor-move flex items-center justify-center"
+                                     draggable="true"
+                                     @dragstart="dragStart($event, keyboard.name)"
+                                     @dragend="dragEnd">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="flex items-center">
+                                        <h3 class="text-lg font-medium" :class="keyboard.enabled ? 'text-gray-900 dark:text-dark-text' : 'text-gray-500 dark:text-dark-muted'">${keyboard.name}</h3>
+                                        <span v-if="keyboard.active" class="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">Active</span>
+                                        <span v-if="keyboard.connected" class="ml-2 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">Connected</span>
+                                        <span v-else class="ml-2 px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded-full">Disconnected</span>
+                                    </div>                            
+                                </div>
                             </div>
                             <div class="flex items-center space-x-4">
                                 <label class="relative inline-flex items-center cursor-pointer">
@@ -182,10 +189,31 @@
                 },
                 async dragStart(event, name) {
                     this.draggedKeyboard = name;
-                    event.target.classList.add('opacity-50');
+                    // Find the parent card element and make it appear dragged
+                    const card = event.target.closest('.border-2');
+                    if (card) {
+                        card.classList.add('opacity-50');
+                        // Create a clone of the card for the drag image
+                        const dragImage = card.cloneNode(true);
+                        dragImage.style.width = card.offsetWidth + 'px';
+                        dragImage.style.position = 'absolute';
+                        dragImage.style.top = '-1000px';
+                        document.body.appendChild(dragImage);
+                        // Set drag image with offset to match cursor position
+                        const rect = event.target.getBoundingClientRect();
+                        const offsetX = event.clientX - rect.left;
+                        const offsetY = event.clientY - rect.top;
+                        event.dataTransfer.setDragImage(dragImage, offsetX, offsetY);
+                        // Remove the clone after a short delay
+                        setTimeout(() => document.body.removeChild(dragImage), 0);
+                    }
                 },
                 async dragEnd(event) {
-                    event.target.classList.remove('opacity-50');
+                    // Find the parent card element and remove drag styles
+                    const card = event.target.closest('.border-2');
+                    if (card) {
+                        card.classList.remove('opacity-50');
+                    }
                     this.draggedKeyboard = null;
                 },
                 async drop(event, targetName) {
@@ -197,10 +225,18 @@
                         const targetIndex = this.config.findIndex(kb => kb.name === targetName);
                         
                         if (draggedIndex === -1 || targetIndex === -1) return;
+
+                        // Calculate drop position relative to the target card
+                        const targetCard = event.currentTarget;
+                        const rect = targetCard.getBoundingClientRect();
+                        const dropY = event.clientY - rect.top;
+                        const isDroppingBelow = dropY > rect.height / 2;
                         
                         // Remove the dragged keyboard and insert it at the target position
                         const [draggedKeyboard] = this.config.splice(draggedIndex, 1);
-                        this.config.splice(targetIndex, 0, draggedKeyboard);
+                        // Adjust target index based on drop position
+                        const adjustedTargetIndex = isDroppingBelow ? targetIndex + 1 : targetIndex;
+                        this.config.splice(adjustedTargetIndex, 0, draggedKeyboard);
                         
                         // Update active status based on enabled and connected state
                         let foundActive = false;
@@ -363,14 +399,6 @@
                 }
             }
         }).mount('#app')
-        window.addEventListener('unload', function () {
-            fetch('/api/exit', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-        });
     </script>
 </body>
 </html> 

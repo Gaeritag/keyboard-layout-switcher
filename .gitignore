@@ -24,6 +24,7 @@ keyboard_config.json
 backups/
 htmlcov/
 test.py
+templates/test.html
 .tox/
 .nox/
 .coverage
