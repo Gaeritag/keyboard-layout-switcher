@@ -319,8 +319,8 @@
                         }
                         const detected = await response.json();
                         
-                        // Create a new array to store updated config
-                        const newConfig = [...this.config];
+                        // Initialize newConfig as an empty array if config is empty
+                        const newConfig = Array.isArray(this.config) ? [...this.config] : [];
                         
                         // Update connection status for existing keyboards
                         detected.forEach(keyboard => {
@@ -345,7 +345,10 @@
                             }
                         });
 
-                        this.config = newConfig;
+                        if (JSON.stringify(this.config) !== JSON.stringify(newConfig)) {
+                            this.config = newConfig;
+                            await this.saveConfig();
+                        }
                     } catch (error) {
                         console.error('Error detecting keyboards:', error);
                     }
