@@ -228,20 +228,30 @@ def detect_active_keyboard():
         config = load_config()
         active_keyboard_name = None
 
-        # Determine active keyboard
+        # First pass: find the first enabled and connected keyboard
         for keyboard in config:
-            if not keyboard.get("enabled", False):
-                continue
-            if is_keyboard_connected(keyboard, connected_vid_pid_set):
+            if keyboard.get("enabled", False) and is_keyboard_connected(keyboard, connected_vid_pid_set):
                 active_keyboard_name = keyboard["name"]
                 break
 
-        # Update each keyboard's connection and active status
+        # Second pass: update all keyboards' connection and active status
+        found_active = False
         for keyboard in config:
             connected = is_keyboard_connected(keyboard, connected_vid_pid_set)
             keyboard["connected"] = connected
-            keyboard["active"] = connected and keyboard.get("enabled", False) and keyboard["name"] == active_keyboard_name
+            
+            # Set active status based on enabled, connected, and if it's the first active keyboard
+            if keyboard.get("enabled", False) and connected:
+                if not found_active:
+                    keyboard["active"] = True
+                    found_active = True
+                else:
+                    keyboard["active"] = False
+            else:
+                keyboard["active"] = False
 
+        # Save the updated config
+        save_config(config)
         return active_keyboard_name
 
     finally:

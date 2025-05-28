@@ -271,22 +271,7 @@
                         res = await response.json()
                         if (this.status == res) return;
                         this.status = res;
-
-                        let foundActive = false;
-                        for (const kb of this.config) {
-                            if (kb.enabled && kb.connected) {
-                                if (!foundActive) {
-                                    kb.active = true;
-                                    foundActive = true;
-                                } else {
-                                    kb.active = false;
-                                }
-                            } else {
-                                kb.active = false;
-                            }
-                        }                
-                        await this.saveConfig();
-
+                        await this.loadConfig();
                     } catch (error) {
                         console.error('Error loading status:', error);
                     }
